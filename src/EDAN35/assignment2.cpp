@@ -671,7 +671,7 @@ edan35::Assignment2::run()
 				glUniform1i(water_shader_locations.normals_texture, 2);
 				glUniform1i(water_shader_locations.opacity_texture, 3);
 				utils::opengl::debug::beginDebugGroup("Draw water");
-				float water_level = 2;//elapsed_time_s;
+				float water_level = elapsed_time_s;
 
 				auto const mipmap_sampler = samplers[toU(Sampler::Mipmaps)];
 				
