@@ -356,90 +356,17 @@ edan35::Assignment2::run()
 		LogError("Failed to load water shader");
 	GBufferShaderLocations water_shader_locations;
 	fillGBufferShaderLocations(water_shader, water_shader_locations);
-	
-	
-	GLuint skybox_shader = 0u;
-	program_manager.CreateAndRegisterProgram("Skybox",
-	                                         { { ShaderType::vertex, "EDAN35/skybox.vert" },
-	                                           { ShaderType::fragment, "EDAN35/skybox.frag" } },
-	                                         skybox_shader);
-	if (skybox_shader == 0u)
-		LogError("Failed to load skybox shader");
-	
-	GLuint const skybox_texture = bonobo::loadTextureCubeMap(config::resources_path("cubemaps/red/bkg3_right1.png"),
-				config::resources_path("cubemaps/red/bkg3_left2.png"), config::resources_path("cubemaps/red/bkg3_top3.png"),
-				config::resources_path("cubemaps/red/bkg3_bottom4.png"), config::resources_path("cubemaps/red/bkg3_front5.png"),
-				config::resources_path("cubemaps/red/bkg3_back6.png"), true);
-	
-	GLuint waves_normal = bonobo::loadTexture2D(config::resources_path("textures/water0326normal.jpg"), true);
-	
-	GLuint phong_shader = 0u;
-	program_manager.CreateAndRegisterProgram("Phong",
-	                                         { { ShaderType::vertex, "EDAN35/phong.vert" },
-	                                           { ShaderType::fragment, "EDAN35/phong.frag" } },
-	                                         phong_shader);
-	if (phong_shader == 0u) {
-		LogError("Failed to load phong shader");
-		return;
-	}
 
-	//auto const set_uniforms = [](GLuint /*program*/){};
-	
-	GLuint phong_diffuse = bonobo::loadTexture2D(config::resources_path("textures/leather_red_02_coll1_2k.jpg"), true);
-	GLuint phong_specular = bonobo::loadTexture2D(config::resources_path("textures/leather_red_02_rough_2k.jpg"), true);
-	GLuint phong_normal = bonobo::loadTexture2D(config::resources_path("textures/leather_red_02_nor_2k.jpg"), true);
-	
-	auto light_position = glm::vec3(-2.0f, 4.0f, 2.0f);
-	auto const set_uniforms = [&light_position](GLuint program){
-		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
-	};
-	
-	bool use_normal_mapping = false;
-	auto camera_position = mCamera.mWorld.GetTranslation();
-	auto ambient = glm::vec3(0.1f, 0.1f, 0.1f);
-	auto diffuse = glm::vec3(0.7f, 0.2f, 0.4f);
-	auto specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	auto shininess = 10.0f;
-	auto const phong_set_uniforms = [&use_normal_mapping,&light_position,&camera_position,&ambient,&diffuse,&specular,&shininess](GLuint program){
-		glUniform1i(glGetUniformLocation(program, "use_normal_mapping"), use_normal_mapping ? 1 : 0);
-		glUniform3fv(glGetUniformLocation(program, "light_position"), 1, glm::value_ptr(light_position));
-		glUniform3fv(glGetUniformLocation(program, "camera_position"), 1, glm::value_ptr(camera_position));
-		glUniform3fv(glGetUniformLocation(program, "ambient"), 1, glm::value_ptr(ambient));
-		glUniform3fv(glGetUniformLocation(program, "diffuse"), 1, glm::value_ptr(diffuse));
-		glUniform3fv(glGetUniformLocation(program, "specular"), 1, glm::value_ptr(specular));
-		glUniform1f(glGetUniformLocation(program, "shininess"), shininess);
-	};
-	
+	auto const set_uniforms = [](GLuint /*program*/){};
+
 	auto const particle_geometry = parametric_shapes::createSphere(1.0f, 4u, 4u);
     Node particle;
     particle.set_geometry(particle_geometry);
-	particle.set_program(&phong_shader, phong_set_uniforms);
-	particle.add_texture("diffuse_texture", phong_diffuse, GL_TEXTURE_2D);
-	particle.add_texture("specular_texture", phong_specular, GL_TEXTURE_2D);
-	particle.add_texture("normal_texture", phong_normal, GL_TEXTURE_2D);
-	
 	rain_effect rain;
-	
-	auto skybox_shape = parametric_shapes::createSphere(2000.0f, 100u, 100u);
-		if (skybox_shape.vao == 0u) {
-			LogError("Failed to retrieve the mesh for the skybox");
-			return;
-		}
-	Node skybox;
-		skybox.set_geometry(skybox_shape);
-		skybox.set_program(&skybox_shader, set_uniforms);
-		skybox.add_texture("skybox_texture", skybox_texture, GL_TEXTURE_CUBE_MAP);
-		
+
 	auto const water_geometry = parametric_shapes::createQuad(1000, 1000, 100, 100);
 		if (water_geometry.vao == 0u)
 			return;
-#if 0
-		Node water;
-		water.set_geometry(water_geometry);
-		water.set_program(&water_shader, set_uniforms);
-		water.add_texture("skybox_texture", skybox_texture, GL_TEXTURE_CUBE_MAP);
-		water.add_texture("normal_texture", waves_normal, GL_TEXTURE_2D);
-#endif
 
 	ViewProjTransforms camera_view_proj_transforms;
 	std::array<ViewProjTransforms, constant::lights_nb> light_view_proj_transforms;
@@ -518,13 +445,7 @@ edan35::Assignment2::run()
 
 		if (!are_lights_paused)
 			seconds_nb += std::chrono::duration<decltype(seconds_nb)>(deltaTimeUs).count();
-#if 0
-		struct timespec ts;
-		clock_gettime(CLOCK_MONOTONIC, &ts);
-		float elapsed_time_s = ts.tv_sec + ts.tv_nsec * 1e-9;
-#endif
 		
-
 		auto& io = ImGui::GetIO();
 		inputHandler.SetUICapture(io.WantCaptureMouse, io.WantCaptureKeyboard);
 
